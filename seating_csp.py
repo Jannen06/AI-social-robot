@@ -243,3 +243,4 @@ P4 and P7 are sharing a presentation so need to sit adjacent
 
 '''
 # Solution [0] = P1, P2, P8, P3, P4, P7, P5, P6
+# Solution No 2: {'P1': 's1', 'P2': 's2', 'P3': 's4', 'P4': 's6', 'P5': 's7', 'P6': 's8', 'P7': 's5', 'P8': 's3'} -- we can select this.
