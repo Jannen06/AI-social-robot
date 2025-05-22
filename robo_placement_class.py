@@ -124,69 +124,93 @@ class A_star_people_placement:
         return positions
 
 
-    def assign_position_to_people(self):
+    def find_best_assignments(self):
         robot = self.robot_pos
-        chair_assignment = {}
+        assignments = {}
+        temp_people = self.people_pos.copy()
+        temp_chairs = self.chair_pos.copy()
 
-        while self.people_pos:
-            # Find nearest person
-            candidates = list(self.people_pos.items())
+        while temp_people:
             best_person = None
-            best_path = None
-            best_dist = float('inf')
+            best_chair = None
+            best_path_len = float('inf')
 
-            for pid, pos in candidates:
+            for pid, p_pos in temp_people.items():
                 blocked = self.static_obstacles.union(
                     {p for p in string.digits if p != pid})
-                blocked_positions = {loc for pid2, loc in self.people_pos.items() if pid2 != pid}
-                path = self.apply_astar(robot, pos, blocked.union(blocked_positions))
-                if path and len(path) < best_dist:
-                    best_dist = len(path)
-                    best_person = pid
-                    best_path = path
+                blocked_positions = {loc for pid2, loc in temp_people.items() if pid2 != pid}
+                path_to_person = self.apply_astar(robot, p_pos, blocked.union(blocked_positions))
 
-            if not best_person:
-                print("No accessible people found.")
+
+                if not path_to_person:
+                    continue
+
+                for label, chair in temp_chairs.items():
+                    blocked = self.static_obstacles.union(set(temp_people.values())) - {'H'}
+                    adjacent_positions = self.get_adjacent_valid_positions(chair, blocked)
+                    for adj_pos in adjacent_positions:
+                        path_to_chair = self.apply_astar(p_pos, adj_pos, blocked)
+                        if path_to_chair:
+                            total_len = len(path_to_person) + len(path_to_chair)
+                            if total_len < best_path_len:
+                                best_path_len = total_len
+                                best_person = pid
+                                best_chair = label
+
+            if not best_person or not best_chair:
+                print("No more valid assignments can be made.")
                 break
 
-            print(f"Robot path to person {best_person} at {self.people_pos[best_person]}: {best_path}")
-            robot = best_path[-1]
+            assignments[best_person] = best_chair
+            del temp_people[best_person]
+            del temp_chairs[best_chair]
+            robot = self.people_pos[best_person]  # Update for next round
 
-            # Now find nearest chair
-            best_chair = None
+        return assignments
+    
+    def seat_people_a_star(self, assignment_dict):
+        robot = self.robot_pos
+        total_cost = 0
+
+        for pid, chair_label in assignment_dict.items():
+            person_pos = self.people_pos[pid]
+            chair_pos = self.chair_pos[chair_label]
+
+            blocked = self.static_obstacles.union({p for p in string.digits if p != pid})
+            other_people = {v for k, v in self.people_pos.items() if k != pid}
+            path_to_person = self.apply_astar(robot, person_pos, blocked.union(other_people))
+
+            if not path_to_person:
+                print(f"Failed to reach person {pid}")
+                continue
+
+            robot = path_to_person[-1]
+            print(f"For person {pid} and seated in chair {chair_label} best path is : {path_to_person}")
+            total_cost += len(path_to_person)
+
+            # Find path to adjacent chair position
+            blocked_chair = self.static_obstacles.union(set(self.people_pos.values())) - {'H'}
             best_chair_path = None
-            best_dist = float('inf')
-            print("Remaining chairs:", self.chair_pos)
+            min_len = float('inf')
 
-            for label, chair in self.chair_pos.items():
-                blocked = self.static_obstacles.union(set(self.people_pos.values())) - {'H'}
-                adjacent_positions = self.get_adjacent_valid_positions(chair, blocked)
-                for adj_pos in adjacent_positions:
-                    path = self.apply_astar(robot, adj_pos, blocked)
-                if path and len(path) < best_dist:
-                    best_chair = (label, chair)
+            for adj in self.get_adjacent_valid_positions(chair_pos, blocked_chair):
+                path = self.apply_astar(robot, adj, blocked_chair)
+                if path and len(path) < min_len:
                     best_chair_path = path
-                    best_dist = len(path)
+                    min_len = len(path)
 
-                
-            
-            if not best_chair:
-                print(f"No available chair for person {best_person}")
-                break
+            if not best_chair_path:
+                print(f"Failed to deliver person {pid} to chair {chair_label}")
+                continue
 
-            print(f"Robot path to deliver person {best_person} to chair {best_chair}: {best_chair_path}")
             robot = best_chair_path[-1]
-            chair_assignment[best_person] = best_chair[0]
+            total_cost += len(best_chair_path)
 
+            print(f"Delivered person {pid} to {chair_label} with total cost: {len(path_to_person) + len(best_chair_path)}")
 
-            # Remove delivered person and chair
-            del self.people_pos[best_person]
-            del self.chair_pos[best_chair[0]]
+        print(f"\nTotal operation cost: {total_cost}")
+        return total_cost
 
-
-        print("\nFinal delivery assignments:")
-        for person, chair_label in chair_assignment.items():
-            print(f"Person {person} is assigned to : {chair_label}")
 
 
 
@@ -194,7 +218,9 @@ class A_star_people_placement:
 
 if __name__ == '__main__':
     planner = A_star_people_placement('home.txt')
-    planner.assign_position_to_people()
+    assignments = planner.find_best_assignments()
+    total_cost = planner.seat_people_a_star(assignments)
+    print("Total cost:", total_cost)
 
         
 
