@@ -14,20 +14,7 @@ from home_layout import generate_house_layout
 grid, rooms = generate_house_layout(
     file_name='/home/jannen/Documents/MAS2025/AI/Assignments/home.txt')
 
-file_path = ...
-
-
-# Read the Layout from the txt file
-def read_layout(file_path='home.txt'):
-    file_path = file_path
-    home = []
-    with open(file_path, 'r') as file:
-
-        for line in file:
-            row = line.strip().split(' ')
-            home.append(row)
-    home = np.array(home)
-    return home
+filepath = '/home/jannen/Documents/MAS2025/AI/Assignments/home.txt'
 
 
 # print(rooms.items())
@@ -46,7 +33,7 @@ for room_type, (row_slice, col_slice) in rooms.items():
     # Assign the slices of matrix to each key room_type as dictionary in rooms_slice
     rooms_dict[room_type] = slices
 
-# TODO: One possible options to implement CS for social robotics
+# TODO: One possible options to implement CSP for social robotics
 
 # Uses MRV to choose the variable.
 
@@ -69,8 +56,8 @@ for room_type, (row_slice, col_slice) in rooms.items():
 #    s3 s4
 
 
-class SeatingCSP:
-    def __init__(self):
+class SeatingCSP():
+    def __init__(self, filepath):
         # Variables of the problem are people.
         self.people = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8']
 
@@ -96,6 +83,22 @@ class SeatingCSP:
             'P5': [('P3', self.should_be_far)],
             'P7': [('P4', self.should_be_adjacent)],
         }
+
+        self.grid = self.read_layout(filepath)
+        self.row, self.column = self.grid.shape
+
+    # Read the Layout from the txt file
+
+    def read_layout(self, file_path='home.txt'):
+        file_path = file_path
+        home = []
+        with open(file_path, 'r') as file:
+
+            for line in file:
+                row = line.strip().split(' ')
+                home.append(row)
+        home = np.array(home)
+        return home
 
     def should_be_adjacent(self, seat1, seat2):
         idx1 = self.seats.index(seat1)
@@ -209,6 +212,40 @@ class SeatingCSP:
         solutions = self.backtrack({}, copy.deepcopy(self.domains))
         return solutions
 
+    def get_chair_pos(self):
+        # We store the position of chairs as a list.
+        chairs = {}
+        count = 1
+        for i in range(self.row):
+            for j in range(self.column):
+                if self.grid[i][j] == 'H':
+                    label = f'H{count}'
+                    chairs[label] = (i, j)
+                    count += 1
+        print(f"Found {len(chairs)} chairs:", chairs)
+        return chairs
+
+    def select_solution(self):
+        solutions = self.solve()
+
+        # choosing the 2nd solution which is aligning with all the constraints
+        solution = solutions[1]
+        print(f"Solution No 2: {solution}")
+
+        chairs = self.get_chair_pos()
+        # print(f"Chair positions : {chairs}")
+
+        # Map the people with position of chairs
+        map_person_chair = {}
+
+        # Mapping seat labels 's1' to 's8' to corresponding 'H1' to 'H8'
+        seat_to_chair = {f's{i+1}': pos for i,
+                         pos in enumerate(chairs.values())}
+        for person, seat in solution.items():
+            map_person_chair[person] = seat_to_chair[seat]
+
+        print(f"map person to chair position: {map_person_chair}")
+
     def print(self):
         # print(f"DOMAINS : {self.domains}")
         print("All possible solutions")
@@ -217,12 +254,16 @@ class SeatingCSP:
 ############################################
 # Usage
 if __name__ == "__main__":
-    csp = SeatingCSP()
+    filepath = '/home/jannen/Documents/MAS2025/AI/Assignments/home.txt'
+
+    csp = SeatingCSP('home.txt')
     solutions = csp.solve()
 
     print(f"Total solutions found: {len(solutions)}\n")
     for i, sol in enumerate(solutions, 1):
         print(f"Solution No {i}: {sol}")
+
+    solution = csp.select_solution()
 
 
 '''
@@ -243,4 +284,5 @@ P4 and P7 are sharing a presentation so need to sit adjacent
 
 '''
 # Solution [0] = P1, P2, P8, P3, P4, P7, P5, P6
+# Solution [1] = P1, P2, P8, P3, P7, P4, P5, P6
 # Solution No 2: {'P1': 's1', 'P2': 's2', 'P3': 's4', 'P4': 's6', 'P5': 's7', 'P6': 's8', 'P7': 's5', 'P8': 's3'} -- we can select this.
