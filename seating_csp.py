@@ -236,15 +236,24 @@ class SeatingCSP():
         # print(f"Chair positions : {chairs}")
 
         # Map the people with position of chairs
+        map_person_chair_pos = {}
         map_person_chair = {}
 
         # Mapping seat labels 's1' to 's8' to corresponding 'H1' to 'H8'
         seat_to_chair = {f's{i+1}': pos for i,
-                         pos in enumerate(chairs.values())}
-        for person, seat in solution.items():
-            map_person_chair[person] = seat_to_chair[seat]
+                         pos in enumerate(chairs.keys())}
 
+        # mapping the position of the chairs as tuples.
+        for person, seat in solution.items():
+            map_person_chair_pos[person] = seat_to_chair[seat]
+
+        # mapping the position of the chairs as H1...H8
+        for person, seat in solution.items():
+            map_person_chair[person.lstrip('P')] = seat_to_chair[seat]
+        print(f"map person to chair position: {map_person_chair_pos}")
         print(f"map person to chair position: {map_person_chair}")
+
+        return map_person_chair
 
     def print(self):
         # print(f"DOMAINS : {self.domains}")
