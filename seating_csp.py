@@ -81,6 +81,9 @@ class SeatingCSP:
         # Domain will be a dict where keys will be person and values will be all 8 seats initially.
         self.domains = {person: self.seats.copy() for person in self.people}
 
+        # fix P1 to seat s1 to iniiate the assignment.
+        self.domains['P1'] = ['s1']
+
         # Constraints from the porblem can be defined as either 2 persons will sit adjacent or far apart.
         # Making a binary constraint for this purpose.
         self.constraints = {
@@ -220,3 +223,23 @@ if __name__ == "__main__":
     print(f"Total solutions found: {len(solutions)}\n")
     for i, sol in enumerate(solutions, 1):
         print(f"Solution No {i}: {sol}")
+
+
+'''
+
+Language Groups:
+
+P1, P2, P3 speak English only
+P4, P5 speak Spanish only
+P6, P7, P8 are bilingual
+At least one bilingual person must sit between language groups
+
+Conversation Preferences:
+
+P1 wants to discuss business with P6 and needs to sit together
+P3 and P5 are in a heated argument so must be far apart at the table
+P2 and P8 are close friends so want to sit together
+P4 and P7 are sharing a presentation so need to sit adjacent
+
+'''
+# Solution [0] = P1, P2, P8, P3, P4, P7, P5, P6
