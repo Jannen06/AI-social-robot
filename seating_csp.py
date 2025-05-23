@@ -12,9 +12,9 @@ from home_layout import generate_house_layout
 
 
 grid, rooms = generate_house_layout(
-    file_name='/home/jannen/Documents/MAS2025/AI/Assignments/home.txt')
+    file_name='home.txt')
 
-filepath = '/home/jannen/Documents/MAS2025/AI/Assignments/home.txt'
+filepath = 'home.txt'
 
 
 # print(rooms.items())
@@ -263,7 +263,7 @@ class SeatingCSP():
 ############################################
 # Usage
 if __name__ == "__main__":
-    filepath = '/home/jannen/Documents/MAS2025/AI/Assignments/home.txt'
+    filepath = 'home.txt'
 
     csp = SeatingCSP('home.txt')
     solutions = csp.solve()

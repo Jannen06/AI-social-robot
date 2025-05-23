@@ -3,7 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import heapq
 
-file_path = '/home/jannen/Documents/MAS2025/AI/Assignments/home.txt'
+file_path = 'home.txt'
 
 home = []
 with open(file_path, 'r') as file:
